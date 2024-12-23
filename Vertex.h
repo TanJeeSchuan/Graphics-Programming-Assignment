@@ -1,8 +1,13 @@
 #pragma once
+#include "Color.h"
+#include "Material.h"
+
 class Vertex
 {
 public:
 	float x, y, z;
+	Color* color;
+	Material* material;
 
 	Vertex(){}
 
@@ -11,5 +16,9 @@ public:
 		this->y = y;
 		this->z = z;
 	}
+
+	//float* to_array() {
+	//	return float[3] {x,y,z};
+	//}
 };
 

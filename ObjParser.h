@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include "Object.h"
+#include "Material.h"
 
 class ObjParser
 {
@@ -13,13 +14,71 @@ public:
 	std::vector<Vertex> allVertices;
 	std::vector<std::vector<Vertex>> faceData;
 
+	std::vector<Material*> materialList = {};
+
 	std::vector<Object*> objectList = {};
 
 	std::ifstream file;
+	std::ifstream mtlFile;
 	std::string str;
 
 	void openObj(const char path[]) {
 		file = std::ifstream(path);
+	}
+
+	void openMtl(const char path[]) {
+		mtlFile = std::ifstream(path);
+	}
+
+	void loadMaterial() {
+		std::string keyword;
+		Material* newMaterial = new Material();;
+
+		while (std::getline(mtlFile, str)) {
+			// Output the text from the file
+			if (str.at(0) != '#') {
+				keyword = getToken(str, 0);
+
+				if (keyword == "newmtl") {
+					newMaterial = new Material();
+					newMaterial->name = getTokens(str)[1];
+
+					materialList.push_back(newMaterial);
+				}
+
+				else if (keyword == "Ns") {
+					newMaterial->setShininess(std::stof(getTokens(str)[1]));
+				}
+
+				else if (keyword == "Ka") {
+					auto values = getTokens(str);
+					newMaterial->setAmbientColour(std::stof(values[1]), std::stof(values[2]), std::stof(values[3]));
+				}
+
+				else if (keyword == "Kd") {
+					auto values = getTokens(str);
+					newMaterial->setDiffuseColour(std::stof(values[1]), std::stof(values[2]), std::stof(values[3]));
+				}
+
+				else if (keyword == "Ks") {
+					auto values = getTokens(str);
+					newMaterial->setSpecularColour(std::stof(values[1]), std::stof(values[2]), std::stof(values[3]));
+				}
+
+				else if (keyword == "Ke") {
+					//auto values = getTokens(str);
+					//newMaterial->setAmbientColour(std::stof(values[1]), std::stof(values[2]), std::stof(values[3]));
+				}
+
+				else if (keyword == "Ni") {
+
+				}
+
+				else if (keyword == "d") {
+
+				}
+			}
+		}
 	}
 
 	void load() {
@@ -27,6 +86,7 @@ public:
 		allVertices = std::vector<Vertex>();
 		faceData = std::vector <std::vector<Vertex>>();
 
+		Material* currentMaterial = nullptr;
 
 		loadVertices();
 
@@ -41,7 +101,10 @@ public:
 				{
 					//object
 					newObject = new Object();
-					newObject->name = getToken(str, 2);
+					newObject->name = getTokens(str)[1];
+
+					currentMaterial = nullptr;
+
 					objectList.push_back(newObject);
 				}
 
@@ -66,12 +129,26 @@ public:
 						if(vertexIndex < allVertices.size())
 						{
 							Vertex faceVertex = allVertices[vertexIndex];
+							faceVertex.material = currentMaterial;
 							faceVertices.push_back(faceVertex);
 						}
 					}
 
 					// and insert data into object
 					newObject->faceData.push_back(faceVertices);
+				}
+
+				else if (keyword == "usemtl") {
+					//find in materials list by name
+					for (auto mat : materialList) {
+						if (mat->name == getTokens(str)[1]) {
+							//assign to var
+							currentMaterial = mat;
+						}
+					}
+
+					
+					//current object will use this material until reassigned or object data ends
 				}
 			}
 		}

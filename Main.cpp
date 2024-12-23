@@ -1,19 +1,6 @@
-#include <iostream>
-//#include "OpenGlParser.h"
 
-//int main()
-//{
-//	Object* obj = new Object();
-//	OpenGlParser parser = OpenGlParser();
-//
-//	parser.openObj("cube.obj");
-//	parser.loadVertices();
-//	parser.loadFaceData();
-//	parser.createObject(obj);
-//	parser.clearState();
-//
-//	std::cout << obj->toString();
-//}
+#pragma once
+#include <iostream>
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -113,20 +100,28 @@ void display()
 
 	
 	glPushMatrix();
-	glTranslatef(0, 0, -10.0f);
-	glRotatef(90, 0, 1, 0);
+	glTranslatef(0, 0, -20.0f);
+	glRotatef(-90, 0, 1, 0);
+	glRotatef(zRot, 0, 1, 0);
 
 	for (auto object : parser.objectList) {
 		for (auto face : object->faceData) {
 			glBegin(GL_LINE_LOOP);
 			for (auto vertex : face) {
 				glVertex3f(vertex.x, vertex.y, vertex.z);
+				//auto vert = vertex.to_array();
+				//glVertex3fv(vert);
+				//delete vert;
 			}
 			glEnd();
 		}
 	}
 
 	glPopMatrix();
+}
+
+void loadMaterial(Material material) {
+	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, material.properties[GL_SHININESS][0]);
 }
 
 //--------------------------------------------------------------------
@@ -185,12 +180,12 @@ int main(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 
 	parser = ObjParser();
 
-	parser.openObj("3DModel.obj");
+	parser.openMtl("robot.mtl");
+	parser.loadMaterial();
+
+	parser.openObj("robot.obj");
 	parser.load();
-	//parser.loadVertices();
-	//parser.loadFaceData();
-	//parser.createObject(obj);
-	//parser.clearState();
+
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -207,7 +202,7 @@ int main(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
-
+		
 		display();
 
 		SwapBuffers(hdc);
