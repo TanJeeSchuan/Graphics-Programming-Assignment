@@ -188,23 +188,27 @@ void display()
 	glRotatef(zRot, 0, 1, 0);
 
 	for (auto object : parser.objectList) {
+		if (object->name == "Head")
+		{
+			object->translate(0.0f, 0.0f, 0.5f);
+		}
 		drawObject(object);
 	}
-
-	//auto object = parser.objectList[3];
-
-	//glTranslatef(-object->origin.x, -object->origin.y, -object->origin.z);
-	//drawObject(object);
 
 	glPopMatrix();
 }
 
+//void drawObject(Object* object, )
+
 void drawObject(Object* object) {
 	glPushMatrix();
 
-	auto worldSpace = object->getWorldSpace();
+	object->getWorldTransform();
+	//auto worldSpace = object->getWorldSpace();
 
-	glTranslatef(worldSpace.x, worldSpace.y, worldSpace.z);
+	glTranslatef(object->translation.x, object->translation.y, object->translation.z);
+
+	//glTranslatef(worldSpace.x, worldSpace.y, worldSpace.z);
 	//glTranslatef(object->localPosition.x, object->localPosition.y, object->localPosition.z);
 
 	for (auto face : object->faceData) {
@@ -324,9 +328,9 @@ int main(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 	Object* child = nullptr;
 	Object* parent = nullptr;
 	for (auto object : parser.objectList) {
-		if (object->name == "Chest")
+		if (object->name == "Head")
 			parent = object;
-		else if (object->name == "Head")
+		else if (object->name == "Eye")
 			child = object;
 	}
 

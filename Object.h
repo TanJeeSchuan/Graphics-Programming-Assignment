@@ -3,8 +3,12 @@
 #include "Vertex.h"
 #include <string>
 
+#define GLM_ENABLE_EXPERIMENTAL 1
+
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtx/matrix_decompose.hpp"
+#include "glm/gtc/quaternion.hpp"
 
 
 class Object
@@ -20,7 +24,14 @@ public:
 
 	glm::mat4x4 transform = glm::mat4x4(1.0f);
 
-	Vertex localPosition;
+	//do not modify directly
+	glm::vec3 scale = glm::vec3(1.0f);
+	glm::quat rotation = glm::quat();
+	glm::vec3 translation = glm::vec3(1.0f);
+	glm::vec3 skew;
+	glm::vec4 perspective;
+
+	//Vertex localPosition;
 	Vertex origin;
 
 	void calculateOrigin()
@@ -37,17 +48,55 @@ public:
 			}
 		}
 
-		
-
 		origin.x = centerX / vertNum;
 		origin.y = centerY / vertNum;
 		origin.z = centerZ / vertNum;
 
-		localPosition.x = origin.x;
-		localPosition.y = origin.y;
-		localPosition.z = origin.z;
+		//localPosition.x = origin.x;
+		//localPosition.y = origin.y;
+		//localPosition.z = origin.z;
 
-		glm::translate(transform, glm::vec3(origin.x, origin.y, origin.z));
+		transform = glm::translate(transform, glm::vec3(origin.x, origin.y, origin.z));
+		transform = glm::scale(transform, glm::vec3(1, 1, 1));
+	}
+
+	void translate(float x, float y, float z) {
+		transform = glm::translate(transform, glm::vec3(x, y, z));
+	}
+
+	void getWorldTransform() {
+		auto current = this;
+		glm::vec3 scale = glm::vec3(1.0f);
+		glm::quat rotation = glm::quat();
+		glm::vec3 translation = glm::vec3(1.0f);
+		glm::vec3 skew;
+		glm::vec4 perspective;
+
+		glm::mat4x4 newTransform = glm::mat4x4(1.0f);
+		while (current != nullptr) {
+			newTransform = current->transform * newTransform;
+
+			//current->calculateTransforms();
+
+			//scale *= current->scale;
+			//rotation *= current->rotation;
+			//translation *= current->translation;
+			//skew *= current->skew;
+			//perspective *= current->perspective;
+
+			current = current->parent;
+		}
+
+		glm::decompose(newTransform, scale, rotation, translation, skew, perspective);
+		this->scale			= scale;
+		this->rotation		= rotation;
+		this->translation	= translation;
+		this->skew			= skew;
+		this->perspective	= perspective;
+	}
+
+	void calculateTransforms() {
+		glm::decompose(transform, scale, rotation, translation, skew, perspective);
 	}
 
 	void transformToWorldPositionZero() {
@@ -61,25 +110,27 @@ public:
 				vertex->z -= origin.z;
 			}
 		}
-
 		return;
 	}
 
-	Vertex getWorldSpace() {
-		Vertex result;
+	//Vertex getWorldSpace() {
+	//	Vertex result;
 
-		auto currentObject = this;
+	//	auto currentObject = this;
 
-		while (currentObject != nullptr) {
-			result = result + currentObject->localPosition;
-			currentObject = currentObject->parent;
-		}
+	//	while (currentObject != nullptr) {
+	//		result = result + currentObject->localPosition;
+	//		currentObject = currentObject->parent;
+	//	}
 
-		return result;
-	}
+	//	return result;
+	//}
 
 	void addParent(Object* parentObject) {
-		localPosition = -parentObject->localPosition + localPosition;
+		parent = parentObject;
+		parentObject->children.push_back(this);
+		//transform = transform * parentObject->transform;
+		/*localPosition = -parentObject->localPosition + localPosition;*/
 	}
 
 	//std::vector<std::vector<float>> getVerticesOfFace(std::vector<int> faceData)
