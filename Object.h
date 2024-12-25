@@ -10,6 +10,7 @@
 #include "glm/gtx/matrix_decompose.hpp"
 #include "glm/gtc/quaternion.hpp"
 
+#include "glm/gtc/matrix_inverse.hpp"
 
 class Object
 {	
@@ -57,42 +58,53 @@ public:
 		//localPosition.z = origin.z;
 
 		transform = glm::translate(transform, glm::vec3(origin.x, origin.y, origin.z));
-		transform = glm::scale(transform, glm::vec3(1, 1, 1));
+		//transform = glm::scale(transform, glm::vec3(1, 1, 1));
 	}
 
 	void translate(float x, float y, float z) {
 		transform = glm::translate(transform, glm::vec3(x, y, z));
 	}
 
-	void getWorldTransform() {
-		auto current = this;
-		glm::vec3 scale = glm::vec3(1.0f);
-		glm::quat rotation = glm::quat();
-		glm::vec3 translation = glm::vec3(1.0f);
-		glm::vec3 skew;
-		glm::vec4 perspective;
+	//void getWorldTransform() {
+	//	auto current = this;
+	//	glm::vec3 scale = glm::vec3(1.0f);
+	//	glm::quat rotation = glm::quat();
+	//	glm::vec3 translation = glm::vec3(1.0f);
+	//	glm::vec3 skew;
+	//	glm::vec4 perspective;
 
+	//	glm::mat4x4 newTransform = glm::mat4x4(1.0f);
+	//	while (current != nullptr) {
+	//		newTransform = current->transform * newTransform;
+
+	//		//current->calculateTransforms();
+
+	//		//scale *= current->scale;
+	//		//rotation *= current->rotation;
+	//		//translation *= current->translation;
+	//		//skew *= current->skew;
+	//		//perspective *= current->perspective;
+
+	//		current = current->parent;
+	//	}
+
+	//	glm::decompose(newTransform, scale, rotation, translation, skew, perspective);
+	//	this->scale			= scale;
+	//	this->rotation		= rotation;
+	//	this->translation	= translation;
+	//	this->skew			= skew;
+	//	this->perspective	= perspective;
+	//}
+
+	glm::mat4 getWorldTransform() {
+		auto current = this;
 		glm::mat4x4 newTransform = glm::mat4x4(1.0f);
 		while (current != nullptr) {
 			newTransform = current->transform * newTransform;
-
-			//current->calculateTransforms();
-
-			//scale *= current->scale;
-			//rotation *= current->rotation;
-			//translation *= current->translation;
-			//skew *= current->skew;
-			//perspective *= current->perspective;
-
 			current = current->parent;
 		}
 
-		glm::decompose(newTransform, scale, rotation, translation, skew, perspective);
-		this->scale			= scale;
-		this->rotation		= rotation;
-		this->translation	= translation;
-		this->skew			= skew;
-		this->perspective	= perspective;
+		return newTransform;
 	}
 
 	void calculateTransforms() {
@@ -127,10 +139,25 @@ public:
 	//}
 
 	void addParent(Object* parentObject) {
+		if (this->parent != nullptr) {
+			parent->removeChild(this);
+		}
 		parent = parentObject;
 		parentObject->children.push_back(this);
-		//transform = transform * parentObject->transform;
-		/*localPosition = -parentObject->localPosition + localPosition;*/
+	}
+
+	void addChild(Object* childObject) {
+		if (childObject->parent != nullptr) {
+			childObject->parent->removeChild(childObject);
+		}
+
+		childObject->parent = this;
+		childObject->transform = glm::inverse(this->getWorldTransform()) * childObject->transform;
+		this->children.push_back(childObject);
+	}
+
+	void removeChild(Object* child) {
+		this->children.erase(std::find(children.begin(), children.end(), child));
 	}
 
 	//std::vector<std::vector<float>> getVerticesOfFace(std::vector<int> faceData)

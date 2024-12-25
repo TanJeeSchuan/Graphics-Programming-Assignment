@@ -24,6 +24,9 @@ void createWindow();
 void resetMaterial();
 void loadMaterial(Material material);
 void drawObject(Object* object);
+void drawObject(Object* object, glm::mat4x4 ctm);
+void drawObject(Object* object, glm::mat4x4 ctm, int depth);
+void drawWithMatrix(Object* object, glm::mat4x4 ctm);
 
 // Parameters for gluLookAt
 float eyeX = 0.0f, eyeY = 0.0f, eyeZ = 10.0f; // Camera position
@@ -31,6 +34,29 @@ float centerX = 0.0f, centerY = 0.0f, centerZ = 0.0f; // Target point
 float upX = 0.0f, upY = 1.0f, upZ = 0.0f; // Up direction
 
 float valueA = 0, valueB = 0, valueC = 0, valueD = 0;
+
+Object* Chest;
+Object* Pelvis;
+Object* ArmJoint;
+Object* Arm_002;
+Object* ArmR;
+Object* Hand;
+Object* Forearm;
+Object* CannonArm;
+Object* Cannon;
+Object* HandFinger;
+Object* HandFinger2;
+Object* Head;
+Object* Neck;
+Object* LegL;
+Object* Anteana;
+Object* LowerLegL;
+Object* Eye;
+Object* LegR;
+Object* LowerLegR;
+Object* ChestPlate;
+Object* Tip;
+
 
 LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -164,6 +190,9 @@ bool initPixelFormat(HDC hdc)
 //Object* obj;
 ObjParser parser = ObjParser();
 GLUquadric* quad;
+
+int ran = false;
+
 void display()
 {
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -187,23 +216,88 @@ void display()
 	glRotatef(-90, 0, 1, 0);
 	glRotatef(zRot, 0, 1, 0);
 
-	for (auto object : parser.objectList) {
-		if (object->name == "Head")
-		{
-			object->translate(0.0f, 0.0f, 0.5f);
-		}
-		drawObject(object);
-	}
+	glm::mat4x4 ctm = glm::mat4x4(1.0f);
+	drawObject(parser.objectList[0], ctm, 0);
+
+	ran = true;
+	//for (auto object : parser.objectList) {
+	//	drawObject(object, ctm);
+	//	//drawObject(object);
+	//}
+
+	Head->translate(0.5f, 0, 0);
 
 	glPopMatrix();
 }
 
-//void drawObject(Object* object, )
+
+void drawObject(Object* object, glm::mat4x4 ctm, int depth) {
+	ctm *= object->transform;
+	drawWithMatrix(object, ctm);
+
+	for (auto child : object->children) {
+		drawObject(child, ctm, depth++);
+	}
+
+	if (!ran)
+	{
+		for (int i = 0; i < depth; i++) {
+			std::cout << "\t";
+		}
+		std::cout << object->name << "\n";
+	}
+	
+	return;
+}
+
+void drawWithMatrix(Object* object, glm::mat4x4 ctm) {
+	glm::vec3 scale = glm::vec3(1.0f);
+	glm::quat rotation = glm::quat();
+	glm::vec3 translation = glm::vec3(1.0f);
+	glm::vec3 skew;
+	glm::vec4 perspective;
+	glm::decompose(ctm, scale, rotation, translation, skew, perspective);
+	
+	glPushMatrix();
+
+	glScalef(scale.x, scale.y, scale.z);
+	glTranslatef(translation.x, translation.y, translation.z);
+
+	for (auto face : object->faceData) {
+		if (face.size() == 3) {
+			glBegin(GL_TRIANGLES);
+		}
+		else if (face.size() == 4) {
+			glBegin(GL_QUADS);
+		}
+		else {
+			glBegin(GL_POLYGON);
+		}
+
+		for (auto& vertex : face) {
+			//glPushAttrib(GL_LIGHTING_BIT);
+
+			if (vertex.material != nullptr) {
+				loadMaterial(*vertex.material);
+			}
+			else {
+				int a = 0;
+			}
+			glNormal3f(vertex.normX, vertex.normY, vertex.normZ);
+			glVertex3f(vertex.x, vertex.y, vertex.z);
+			resetMaterial();
+			//glPopAttrib();
+		}
+
+		glEnd();
+	}
+	glPopMatrix();
+}
 
 void drawObject(Object* object) {
 	glPushMatrix();
 
-	object->getWorldTransform();
+	//object->getWorldTransform();
 	//auto worldSpace = object->getWorldSpace();
 
 	glTranslatef(object->translation.x, object->translation.y, object->translation.z);
@@ -325,18 +419,53 @@ int main(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 	parser.openObj("robot.obj");
 	parser.load();
 
-	Object* child = nullptr;
-	Object* parent = nullptr;
+
 	for (auto object : parser.objectList) {
-		if (object->name == "Head")
-			parent = object;
-		else if (object->name == "Eye")
-			child = object;
+		if (object->name == "Chest") Chest = object;
+		else if (object->name == "Pelvis") Pelvis = object;
+		else if (object->name == "ArmJoint") ArmJoint = object;
+		else if (object->name == "Arm.002") Arm_002 = object; // Assuming the variable is adapted to Arm_002
+		else if (object->name == "ArmR") ArmR = object;
+		else if (object->name == "Hand") Hand = object;
+		else if (object->name == "Forearm") Forearm = object;
+		else if (object->name == "CannonArm") CannonArm = object;
+		else if (object->name == "Cannon") Cannon = object;
+		else if (object->name == "HandFinger") HandFinger = object;
+		else if (object->name == "HandFinger2") HandFinger2 = object;
+		else if (object->name == "Head") Head = object;
+		else if (object->name == "Neck") Neck = object;
+		else if (object->name == "LegL") LegL = object;
+		else if (object->name == "Anteana") Anteana = object;
+		else if (object->name == "LowerLegL") LowerLegL = object;
+		else if (object->name == "Eye") Eye = object;
+		else if (object->name == "LegR") LegR = object;
+		else if (object->name == "LowerLegR") LowerLegR = object;
+		else if (object->name == "ChestPlate") ChestPlate = object;
+		else if (object->name == "Tip") Tip = object;
+
 	}
 
-	if(child != nullptr && parent != nullptr)
-		child->addParent(parent);
-
+	// Assigning parent-child relationships using Object's member function addParent
+	Pelvis->addChild(Chest);
+		Chest->addChild(ArmR);
+			ArmR->addChild(Arm_002);
+				Arm_002->addChild(ArmJoint);
+				Arm_002->addChild(Forearm);
+					Forearm->addChild(Hand);
+						Hand->addChild(HandFinger);
+						Hand->addChild(HandFinger2);
+		Chest->addChild(CannonArm);
+			CannonArm->addChild(Cannon);
+		Chest->addChild(Neck);
+			Neck->addChild(Head);
+				Head->addChild(Anteana);
+				Head->addChild(Eye);
+				Head->addChild(Tip);
+		Chest->addChild(ChestPlate);
+	Pelvis->addChild(LegL);
+		LegL->addChild(LowerLegL);
+	Pelvis->addChild(LegR);
+		LowerLegL->addChild(LowerLegR);
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();

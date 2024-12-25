@@ -91,6 +91,10 @@ public:
 
 		loadVertices();
 
+		Object* world = new Object();
+		world->name = "World";
+		objectList.push_back(world);
+
 		std::string keyword;
 		Object* newObject = new Object();;
 		while (std::getline(file, str)) {
@@ -102,6 +106,7 @@ public:
 				{
 					newObject->calculateOrigin();
 					newObject->transformToWorldPositionZero();
+					newObject->addParent(world);
 					//object
 					newObject = new Object();
 					newObject->name = getTokens(str)[1];
@@ -169,6 +174,10 @@ public:
 				}
 			}
 		}
+
+		newObject->calculateOrigin();
+		newObject->transformToWorldPositionZero();
+		newObject->addParent(world);
 	}
 
 	void loadVertices() {
