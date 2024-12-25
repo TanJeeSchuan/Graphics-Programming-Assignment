@@ -100,6 +100,8 @@ public:
 
 				if (keyword == "o")
 				{
+					newObject->calculateOrigin();
+					newObject->transformToWorldPositionZero();
 					//object
 					newObject = new Object();
 					newObject->name = getTokens(str)[1];

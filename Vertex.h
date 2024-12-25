@@ -17,5 +17,29 @@ public:
 		this->y = y;
 		this->z = z;
 	}
+
+	Vertex operator+(Vertex const& vert) {
+		Vertex result;
+		result.x = x + vert.x;
+		result.y = y + vert.y;
+		result.z = z + vert.z;
+		return result;
+	}
+
+	Vertex operator-(Vertex const& vert) {
+		Vertex result;
+		result.x = x - vert.x;
+		result.y = y - vert.y;
+		result.z = z - vert.z;
+		return result;
+	}
+
+	Vertex operator-() {
+		Vertex result;
+		result.x = -x;
+		result.y = -y;
+		result.z = -z;
+		return result;
+	}
 };
 

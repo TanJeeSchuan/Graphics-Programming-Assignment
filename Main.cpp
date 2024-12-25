@@ -23,6 +23,7 @@ int zRot = 0;
 void createWindow();
 void resetMaterial();
 void loadMaterial(Material material);
+void drawObject(Object* object);
 
 // Parameters for gluLookAt
 float eyeX = 0.0f, eyeY = 0.0f, eyeZ = 10.0f; // Camera position
@@ -176,10 +177,6 @@ void display()
 	//	gluSphere(quad, 5, 10, 10);
 
 	//glPopMatrix();
-	
-
-
-
 
 	glPushMatrix();
 
@@ -191,36 +188,54 @@ void display()
 	glRotatef(zRot, 0, 1, 0);
 
 	for (auto object : parser.objectList) {
-		for (auto face : object->faceData) {
-			
-			if (face.size() == 3) {
-				glBegin(GL_TRIANGLES);
-			}
-			else if (face.size() == 4) {
-				glBegin(GL_QUADS);
+		drawObject(object);
+	}
+
+	//auto object = parser.objectList[3];
+
+	//glTranslatef(-object->origin.x, -object->origin.y, -object->origin.z);
+	//drawObject(object);
+
+	glPopMatrix();
+}
+
+void drawObject(Object* object) {
+	glPushMatrix();
+
+	auto worldSpace = object->getWorldSpace();
+
+	glTranslatef(worldSpace.x, worldSpace.y, worldSpace.z);
+	//glTranslatef(object->localPosition.x, object->localPosition.y, object->localPosition.z);
+
+	for (auto face : object->faceData) {
+		if (face.size() == 3) {
+			glBegin(GL_TRIANGLES);
+		}
+		else if (face.size() == 4) {
+			glBegin(GL_QUADS);
+		}
+		else {
+			glBegin(GL_POLYGON);
+		}
+
+		for (auto& vertex : face) {
+			//glPushAttrib(GL_LIGHTING_BIT);
+
+			if (vertex.material != nullptr) {
+				loadMaterial(*vertex.material);
 			}
 			else {
-				glBegin(GL_POLYGON);
-			}
-			for (auto& vertex : face) {
-				//glPushAttrib(GL_LIGHTING_BIT);
-
-				if (vertex.material != nullptr) {
-					loadMaterial(*vertex.material);
-				}
-				else {
-					int a = 0;
-				}
-
-				glNormal3f(vertex.normX, vertex.normY, vertex.normZ);
-				glVertex3f(vertex.x, vertex.y, vertex.z);
-
-				resetMaterial();
-				//glPopAttrib();
+				int a = 0;
 			}
 
-			glEnd();
+			glNormal3f(vertex.normX, vertex.normY, vertex.normZ);
+			glVertex3f(vertex.x, vertex.y, vertex.z);
+
+			resetMaterial();
+			//glPopAttrib();
 		}
+
+		glEnd();
 	}
 
 	glPopMatrix();
@@ -305,6 +320,18 @@ int main(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 
 	parser.openObj("robot.obj");
 	parser.load();
+
+	Object* child = nullptr;
+	Object* parent = nullptr;
+	for (auto object : parser.objectList) {
+		if (object->name == "Chest")
+			parent = object;
+		else if (object->name == "Head")
+			child = object;
+	}
+
+	if(child != nullptr && parent != nullptr)
+		child->addParent(parent);
 
 
 	glMatrixMode(GL_PROJECTION);
