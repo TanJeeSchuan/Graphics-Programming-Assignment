@@ -6,6 +6,7 @@ class Vertex
 {
 public:
 	float x, y, z;
+	float normX = 0, normY = 0, normZ = 0;
 	Color* color;
 	Material* material;
 
@@ -16,9 +17,5 @@ public:
 		this->y = y;
 		this->z = z;
 	}
-
-	//float* to_array() {
-	//	return float[3] {x,y,z};
-	//}
 };
 

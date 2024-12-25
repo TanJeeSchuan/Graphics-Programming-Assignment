@@ -18,7 +18,18 @@ WNDCLASS wndClass;
 int xRot = 0;
 int zRot = 0;
 
+//float eyeX = 0, eyeY = 0, centerX = 0, centerY = 0;
+
 void createWindow();
+void resetMaterial();
+void loadMaterial(Material material);
+
+// Parameters for gluLookAt
+float eyeX = 0.0f, eyeY = 0.0f, eyeZ = 10.0f; // Camera position
+float centerX = 0.0f, centerY = 0.0f, centerZ = 0.0f; // Target point
+float upX = 0.0f, upY = 1.0f, upZ = 0.0f; // Up direction
+
+float valueA = 0, valueB = 0, valueC = 0, valueD = 0;
 
 LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -31,6 +42,65 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 	case WM_KEYDOWN:
 
 		switch (wParam) {
+
+		case 'A': // Increase valueA
+			valueA += 0.1f;
+			break;
+		case 'Z': // Decrease valueA
+			valueA -= 0.1f;
+			break;
+		case 'S': // Increase valueB
+			valueB += 0.1f;
+			break;
+		case 'X': // Decrease valueB
+			valueB -= 0.1f;
+			break;
+		case 'D': // Increase valueC
+			valueC += 0.1f;
+			break;
+		case 'C': // Decrease valueC
+			valueC -= 0.1f;
+			break;
+		case 'F': // Increase valueD
+			valueD += 0.1f;
+			break;
+		case 'V': // Decrease valueD
+			valueD -= 0.1f;
+			break;
+
+			//case VK_UP:    // Move eye upward
+			//	eyeY += 1.0f;
+			//	break;
+			//case VK_DOWN:  // Move eye downward
+			//	eyeY -= 1.0f;
+			//	break;
+			//case VK_RIGHT: // Move eye right
+			//	eyeX += 1.0f;
+			//	break;
+			//case VK_LEFT:  // Move eye left
+			//	eyeX -= 1.0f;
+			//	break;
+
+			//	// Control the center point
+			//case 'W':      // Move center point upward
+			//	centerY += 1.0f;
+			//	break;
+			//case 'S':      // Move center point downward
+			//	centerY -= 1.0f;
+			//	break;
+			//case 'D':      // Move center point right
+			//	centerX += 1.0f;
+			//	break;
+			//case 'A':      // Move center point left
+			//	centerX -= 1.0f;
+			//	break;
+			//case 'Q':
+			//	std::cout << "Q";
+			//	centerZ += 1.0f;
+			//	break;
+			//case 'E':
+			//	centerZ -= 1.0f;
+			//	break;
 			case VK_UP:
 				xRot++;
 				break;
@@ -92,27 +162,63 @@ bool initPixelFormat(HDC hdc)
 
 //Object* obj;
 ObjParser parser = ObjParser();
-
+GLUquadric* quad;
 void display()
 {
 	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
+	//glPushMatrix();
+	//	glTranslatef(centerX, centerY, -50.0f);
+	//	quad = gluNewQuadric();
+	//	gluQuadricDrawStyle(quad, GLU_OUTLINE_POLYGON);
+	//	gluSphere(quad, 5, 10, 10);
+
+	//glPopMatrix();
 	
+
+
+
+
 	glPushMatrix();
+
+	//gluLookAt(eyeX, eyeY, 0, centerX, centerY, -50.0f, 0, 1, 0);
+	//gluLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ);
+
 	glTranslatef(0, 0, -20.0f);
 	glRotatef(-90, 0, 1, 0);
 	glRotatef(zRot, 0, 1, 0);
 
 	for (auto object : parser.objectList) {
 		for (auto face : object->faceData) {
-			glBegin(GL_LINE_LOOP);
-			for (auto vertex : face) {
-				glVertex3f(vertex.x, vertex.y, vertex.z);
-				//auto vert = vertex.to_array();
-				//glVertex3fv(vert);
-				//delete vert;
+			
+			if (face.size() == 3) {
+				glBegin(GL_TRIANGLES);
 			}
+			else if (face.size() == 4) {
+				glBegin(GL_QUADS);
+			}
+			else {
+				glBegin(GL_POLYGON);
+			}
+			for (auto& vertex : face) {
+				//glPushAttrib(GL_LIGHTING_BIT);
+
+				if (vertex.material != nullptr) {
+					loadMaterial(*vertex.material);
+				}
+				else {
+					int a = 0;
+				}
+
+				glNormal3f(vertex.normX, vertex.normY, vertex.normZ);
+				glVertex3f(vertex.x, vertex.y, vertex.z);
+
+				resetMaterial();
+				//glPopAttrib();
+			}
+
 			glEnd();
 		}
 	}
@@ -120,8 +226,22 @@ void display()
 	glPopMatrix();
 }
 
+void resetMaterial() {
+	float defaultAmbient[] = { 0.2, 0.2, 0.2, 1.0 };
+	float defaultDiffuse[] = { 0.8, 0.8, 0.8, 1.0 };
+	float defaultSpecular[] ={ 0.0, 0.0, 0.0, 1.0 };
+
+	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 100.0f);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defaultAmbient);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, defaultDiffuse);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, defaultSpecular);
+}
+
 void loadMaterial(Material material) {
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, material.properties[GL_SHININESS][0]);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, material.properties[GL_AMBIENT].data());
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, material.properties[GL_DIFFUSE].data());
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, material.properties[GL_SPECULAR].data());
 }
 
 //--------------------------------------------------------------------
@@ -189,8 +309,30 @@ int main(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(60.0f, 1, 1, 30);
+	gluPerspective(60.0f, 1, 1, 3000);
 	//glFrustum(-10, 10, -10, 10, 0, 150);
+	glEnable(GL_CULL_FACE);
+
+	glEnable(GL_LIGHTING);
+
+	glDepthFunc(GL_LEQUAL);
+	glEnable(GL_DEPTH_TEST);
+	
+	//glEnable(GL_LIGHT0);
+	////glLightfv(GL_LIGHT0, GL_AMBIENT, new float[3] {1.0f, 1.0f, 1.0f});
+	//glLightfv(GL_LIGHT0, GL_DIFFUSE, new float[3] {1.0f, 1.0f, 1.0f});
+	////glLightfv(GL_LIGHT0, GL_SPECULAR,new float[3] {1.0f, 1.0f, 1.0f});
+	//glLightfv(GL_LIGHT0, GL_POSITION, new float[3] {1, 1, 1});
+
+	glEnable(GL_LIGHT0);
+	float diffuse[] = { 1.0f, 1.0f, 1.0f };
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
+
+	float specular[] = { 1.0f, 1.0f, 0.0f };
+	glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
+
+	float lightDirection[] = { 1.3, -0.4, 0.2, 0 };
+	glLightfv(GL_LIGHT0, GL_POSITION, lightDirection);
 
 
 	while (true)

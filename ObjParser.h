@@ -12,6 +12,7 @@ class ObjParser
 public:
 	std::string name;
 	std::vector<Vertex> allVertices;
+	std::vector<std::vector<float>> allNormals;
 	std::vector<std::vector<Vertex>> faceData;
 
 	std::vector<Material*> materialList = {};
@@ -36,7 +37,7 @@ public:
 
 		while (std::getline(mtlFile, str)) {
 			// Output the text from the file
-			if (str.at(0) != '#') {
+			if (str.size() > 0 && str.at(0) != '#') {
 				keyword = getToken(str, 0);
 
 				if (keyword == "newmtl") {
@@ -94,7 +95,7 @@ public:
 		Object* newObject = new Object();;
 		while (std::getline(file, str)) {
 			// Output the text from the file
-			if (str.at(0) != '#') {
+			if (str.size() > 0 && str.at(0) != '#') {
 				keyword = getToken(str, 0);
 
 				if (keyword == "o")
@@ -126,12 +127,26 @@ public:
 						int vertexIndex = std::stoi(split(verts, '/')[0]) - 1;
 						std::cout << vertexIndex << std::endl;
 
+						Vertex faceVertex;
 						if(vertexIndex < allVertices.size())
 						{
-							Vertex faceVertex = allVertices[vertexIndex];
+							faceVertex = allVertices[vertexIndex];
 							faceVertex.material = currentMaterial;
-							faceVertices.push_back(faceVertex);
 						}
+
+						//-------------- normal vertex --------------
+						int normalIndex = std::stoi(split(verts, '/')[2]) - 1;
+						std::cout << normalIndex << std::endl;
+
+						if (normalIndex < allNormals.size())
+						{
+							auto normalVerts = allNormals[normalIndex];
+							faceVertex.normX = normalVerts[0];
+							faceVertex.normY = normalVerts[1];
+							faceVertex.normZ = normalVerts[2];
+						}
+
+						faceVertices.push_back(faceVertex);
 					}
 
 					// and insert data into object
@@ -164,11 +179,20 @@ public:
 					auto tokens = getTokens(str);
 					loadVertex(std::stof(tokens[1]), std::stof(tokens[2]), std::stof(tokens[3]));
 				}
+
+				else if (keyword == "vn") {
+					auto tokens = getTokens(str);
+					loadNormal(std::stof(tokens[1]), std::stof(tokens[2]), std::stof(tokens[3]));
+				}
 			}
 		}
 
 		file.clear();
 		file.seekg(0);
+	}
+
+	void loadNormal(float x, float y, float z) {
+		allNormals.push_back({ x,y,z });
 	}
 
 	void loadVertex(float x, float y, float z)
