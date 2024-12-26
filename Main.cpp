@@ -141,6 +141,14 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 				Head->rotate(glm::radians(-5.f), 0, 1, 0);
 				break;
 
+			case 'W':
+				Chest->rotate(glm::radians(5.f), 0, 1, 0);
+				break;
+
+			case 'S':
+				Chest->rotate(glm::radians(-5.f), 0, 1, 0);
+				break;
+
 			case 'E': // Originally 'R'
 				ArmR->rotate(glm::radians(5.f), 0, 0, 1);
 				break;
@@ -369,8 +377,8 @@ void drawWithMatrix(Object* object, glm::mat4x4 ctm) {
 			else {
 				int a = 0;
 			}
-			glNormal3f(vertex.normX, vertex.normY, vertex.normZ);
-			glVertex3f(vertex.x, vertex.y, vertex.z);
+			glNormal3fv(vertex.normalData());
+			glVertex3fv(vertex.vertexData());
 			resetMaterial();
 			//glPopAttrib();
 		}

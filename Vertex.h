@@ -18,6 +18,16 @@ public:
 		this->z = z;
 	}
 
+	float* vertexData() {
+		float arr[3] = { x,y,z };
+		return arr;
+	}
+
+	float* normalData() {
+		float arr[3] = { normX,normY,normZ };
+		return arr;
+	}
+
 	Vertex operator+(Vertex const& vert) {
 		Vertex result;
 		result.x = x + vert.x;

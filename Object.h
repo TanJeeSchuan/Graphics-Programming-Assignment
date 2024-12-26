@@ -37,7 +37,10 @@ public:
 	Vertex origin;
 
 	void translate(float x, float y, float z) {
-		transform = glm::translate(transform, glm::vec3(x, y, z));
+		origin.x += x;
+		origin.y += y;
+		origin.z += z;
+		transform = glm::translate(transform, glm::vec3(origin.x, origin.y, origin.z));
 	}
 
 	void scale(float x, float y, float z) {
@@ -104,16 +107,6 @@ public:
 	}
 
 	glm::mat4 getTransform() {
-		//glm::vec3 eulerRotation = glm::degrees(glm::eulerAngles(rotation));
-
-		//glm::mat4x4 t = glm::mat4x4(1.0f);
-		//t = glm::translate(t, glm::vec3(position.x, position.y, position.z));
-		////t = glm::translate(t, glm::vec3);
-		//t = glm::rotate(eulerRotation.x, glm::vec3(1, 0, 0));
-		//t = glm::rotate(eulerRotation.y, glm::vec3(0, 1, 0));
-		//t = glm::rotate(eulerRotation.z, glm::vec3(0, 0, 1));
-		//t = glm::scale(t, scaling);
-
 		return transform;
 	}
 
