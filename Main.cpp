@@ -70,30 +70,30 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 
 		switch (wParam) {
 
-		case 'A': // Increase valueA
-			valueA += 0.1f;
-			break;
-		case 'Z': // Decrease valueA
-			valueA -= 0.1f;
-			break;
-		case 'S': // Increase valueB
-			valueB += 0.1f;
-			break;
-		case 'X': // Decrease valueB
-			valueB -= 0.1f;
-			break;
-		case 'D': // Increase valueC
-			valueC += 0.1f;
-			break;
-		case 'C': // Decrease valueC
-			valueC -= 0.1f;
-			break;
-		case 'F': // Increase valueD
-			valueD += 0.1f;
-			break;
-		case 'V': // Decrease valueD
-			valueD -= 0.1f;
-			break;
+		//case 'A': // Increase valueA
+		//	valueA += 0.1f;
+		//	break;
+		//case 'Z': // Decrease valueA
+		//	valueA -= 0.1f;
+		//	break;
+		//case 'S': // Increase valueB
+		//	valueB += 0.1f;
+		//	break;
+		//case 'X': // Decrease valueB
+		//	valueB -= 0.1f;
+		//	break;
+		//case 'D': // Increase valueC
+		//	valueC += 0.1f;
+		//	break;
+		//case 'C': // Decrease valueC
+		//	valueC -= 0.1f;
+		//	break;
+		//case 'F': // Increase valueD
+		//	valueD += 0.1f;
+		//	break;
+		//case 'V': // Decrease valueD
+		//	valueD -= 0.1f;
+		//	break;
 
 			//case VK_UP:    // Move eye upward
 			//	eyeY += 1.0f;
@@ -128,6 +128,14 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			//case 'E':
 			//	centerZ -= 1.0f;
 			//	break;
+			case 'D':
+				Head->rotate(glm::radians(5.0f), 0, 0, 1);
+				break;
+
+			case 'A':
+				Head->rotate(-glm::radians(5.0f), 0, 0, 1);
+				break;
+
 			case VK_UP:
 				xRot++;
 				break;
@@ -193,6 +201,7 @@ GLUquadric* quad;
 
 int ran = false;
 
+float angle = 0;
 void display()
 {
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -212,12 +221,20 @@ void display()
 	//gluLookAt(eyeX, eyeY, 0, centerX, centerY, -50.0f, 0, 1, 0);
 	//gluLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ);
 
-	glTranslatef(0, 0, -20.0f);
+	glTranslatef(0, 5.0f, -20.0f);
 	glRotatef(-90, 0, 1, 0);
 	glRotatef(zRot, 0, 1, 0);
 
+	//Head->scale(1.01f, 1.01f, 1.01f);
+	//Head->rotate(glm::radians(5.0f), 0, 1, 0);
+
+	//Head->position = { 50, 50, 0 };
+
 	glm::mat4x4 ctm = glm::mat4x4(1.0f);
-	drawObject(parser.objectList[0], ctm, 0);
+	drawObject(parser.objectList[2], ctm, 0);
+
+	//Head->rotate(0.1f, 0, 1, 0);
+	//angle += 1.5f;
 
 	ran = true;
 	//for (auto object : parser.objectList) {
@@ -225,19 +242,15 @@ void display()
 	//	//drawObject(object);
 	//}
 
-	Head->translate(0.5f, 0, 0);
+	//Head->translate(0.1f, 0, 0);
 
 	glPopMatrix();
 }
 
 
 void drawObject(Object* object, glm::mat4x4 ctm, int depth) {
-	ctm *= object->transform;
+	ctm = object->getTransform() * ctm;
 	drawWithMatrix(object, ctm);
-
-	for (auto child : object->children) {
-		drawObject(child, ctm, depth++);
-	}
 
 	if (!ran)
 	{
@@ -246,7 +259,10 @@ void drawObject(Object* object, glm::mat4x4 ctm, int depth) {
 		}
 		std::cout << object->name << "\n";
 	}
-	
+
+	for (auto child : object->children) {
+		drawObject(child, ctm, depth++);
+	}
 	return;
 }
 
@@ -257,10 +273,16 @@ void drawWithMatrix(Object* object, glm::mat4x4 ctm) {
 	glm::vec3 skew;
 	glm::vec4 perspective;
 	glm::decompose(ctm, scale, rotation, translation, skew, perspective);
-	
+
+	auto axis = glm::axis(rotation);
+	glm::vec3 eulerRotation = glm::degrees(glm::eulerAngles(rotation));
+
 	glPushMatrix();
 
 	glScalef(scale.x, scale.y, scale.z);
+	glRotatef(eulerRotation.x, axis.x	, 0		, 0);
+	glRotatef(eulerRotation.y, 0		, axis.y, 0);
+	glRotatef(eulerRotation.z, 0		, 0		, axis.z);
 	glTranslatef(translation.x, translation.y, translation.z);
 
 	for (auto face : object->faceData) {
@@ -300,7 +322,7 @@ void drawObject(Object* object) {
 	//object->getWorldTransform();
 	//auto worldSpace = object->getWorldSpace();
 
-	glTranslatef(object->translation.x, object->translation.y, object->translation.z);
+	//glTranslatef(object->translation.x, object->translation.y, object->translation.z);
 
 	//glTranslatef(worldSpace.x, worldSpace.y, worldSpace.z);
 	//glTranslatef(object->localPosition.x, object->localPosition.y, object->localPosition.z);
