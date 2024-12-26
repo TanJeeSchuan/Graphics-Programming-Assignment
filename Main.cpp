@@ -133,16 +133,54 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			//case 'E':
 			//	centerZ -= 1.0f;
 			//	break;
-			case 'D':
-				Head->rotate(glm::radians(15.f), 0, 1, 0);
+			case 'Q':
+				Head->rotate(glm::radians(5.f), 0, 1, 0);
 				break;
 
 			case 'A':
-				Head->rotate(glm::radians(-15.f), 0, 1, 0);
+				Head->rotate(glm::radians(-5.f), 0, 1, 0);
 				break;
 
-			case 'W':
-				rotateHead();
+			case 'E': // Originally 'R'
+				ArmR->rotate(glm::radians(5.f), 0, 0, 1);
+				break;
+
+			case 'D': // Originally 'F'
+				ArmR->rotate(glm::radians(-5.f), 0, 0, 1);
+				break;
+
+			case 'R': // Originally 'T'
+				Forearm->rotate(glm::radians(5.f), 0, 0, 1);
+				break;
+
+			case 'F': // Originally 'G'
+				Forearm->rotate(glm::radians(-5.f), 0, 0, 1);
+				break;
+
+			case 'T': // Originally 'Y'
+				Hand->rotate(glm::radians(5.f), 0, 1, 0);
+				break;
+
+			case 'G': // Originally 'H'
+				Hand->rotate(glm::radians(-5.f), 0, 1, 0);
+				break;
+
+			case 'Y': // Originally 'U'
+				HandFinger->rotate(glm::radians(5.f), 0, 0, 1);
+				HandFinger2->rotate(glm::radians(-5.f), 0, 0, 1);
+				break;
+
+			case 'H': // Originally 'J'
+				HandFinger->rotate(glm::radians(-5.f), 0, 0, 1);
+				HandFinger2->rotate(glm::radians(5.f), 0, 0, 1);
+				break;
+
+			case 'U': // Originally 'I'
+				CannonArm->rotate(glm::radians(5.f), 0, 0, 1);
+				break;
+
+			case 'J': // Originally 'K'
+				CannonArm->rotate(glm::radians(-5.f), 0, 0, 1);
 				break;
 
 			case VK_UP:
@@ -251,7 +289,7 @@ void display()
 	//	//drawObject(object);
 	//}
 
-	rotateHead();
+	//rotateHead();
 
 	//Head->translate(0.1f, 0, 0);
 
@@ -270,7 +308,7 @@ void rotateHead() {
 
 
 void drawObject(Object* object, glm::mat4x4 ctm, int depth) {
-	ctm = object->getTransform() * ctm;
+	ctm = ctm * object->getTransform();
 	drawWithMatrix(object, ctm);
 
 	if (!ran)
@@ -405,7 +443,6 @@ void loadMaterial(Material material) {
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, material.properties[GL_SPECULAR].data());
 }
 
-
 void Start() {
 	headRotateStartTime = Timer().currentTime();
 	Head->rotate(glm::radians(15.f), 0, 1, 0);
@@ -523,12 +560,29 @@ int main(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 	Pelvis->addChild(LegR);
 		LowerLegL->addChild(LowerLegR);
 
+	ArmR->origin.x = 0;
+	ArmR->origin.y = 0.999365f;
+	ArmR->origin.z = 0.000543f;
+
+	Arm_002->setOrigin(0,0, 0.695774f);
+	Forearm->setOrigin(0.f, 0.f, 0.f);
+	Hand->setOrigin(0.0f, 0.f, 1.0f);
+	//HandFinger->setOrigin(-1.01921, -1, 4.86113);
+	//HandFinger2->setOrigin(-1.01921, -1, 4.86113);
+	HandFinger->setOrigin(0.440792, -1.41174, -5.40215);
+	HandFinger2->setOrigin(-0.255423, -1.41174, -5.40215);
+
+
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(60.0f, 1, 1, 3000);
+	
 	//glFrustum(-10, 10, -10, 10, 0, 150);
+	
+	//glOrtho(-1, 1, -1, 1, -1, 1);
+	
+	
 	glEnable(GL_CULL_FACE);
-
 	glEnable(GL_LIGHTING);
 
 	glDepthFunc(GL_LEQUAL);
@@ -549,6 +603,8 @@ int main(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 
 	float lightDirection[] = { 1.3, -0.4, 0.2, 0 };
 	glLightfv(GL_LIGHT0, GL_POSITION, lightDirection);
+
+	//glMatrixMode(GL_MODELVIEW);
 
 	Start();
 	while (true)

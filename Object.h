@@ -45,18 +45,51 @@ public:
 	}
 
 	float rot = 0.;
+	void rotateAroundPoint(float angle, float x, float y, float z, float a, float b, float c) {
+		auto inDegrees = glm::degrees(angle);
+
+		inDegrees = fmod(inDegrees, 360.f);
+
+		auto newAngle = glm::radians(inDegrees);
+		//rot += glm::degrees(newAngle);
+		//std::cout << rot << "\n";
+
+		if (children.size() > 0) {
+			for (auto child : children) {
+				child->rotateAroundPoint(angle, x, y, z, a, b, c);
+			}
+		}
+
+		auto t1 = glm::translate(glm::mat4(1), -glm::vec3(a, b, c));
+		auto r1 = glm::rotate(glm::mat4(1), newAngle, glm::normalize(glm::vec3(x, y, z)));
+		auto t2 = glm::translate(glm::mat4(1), glm::vec3(a, b, c));
+
+		transform = r1 * transform;
+	}
+
 	void rotate(float angle, float x, float y, float z) {
 		auto inDegrees = glm::degrees(angle);
 
 		inDegrees = fmod(inDegrees, 360.f);
 
 		auto newAngle = glm::radians(inDegrees);
-		rot += glm::degrees(newAngle);
-		std::cout << rot << "\n";
-	
-		transform = glm::translate(transform, glm::vec3(-origin.x, -origin.y, -origin.z));
-		transform = glm::rotate(transform, newAngle, glm::normalize(glm::vec3(x, y, z)));
-		transform = glm::translate(transform, glm::vec3(origin.x, origin.y, origin.z));
+		//rot += glm::degrees(newAngle);
+		//std::cout << rot << "\n";
+
+		//if (children.size() > 0) {
+		//	for (auto child : children) {
+		//		child->rotateAroundPoint(angle, x, y, z, origin.x, origin.y, origin.z);
+		//	}
+		//}
+
+
+		
+		auto t1 = glm::translate(glm::mat4(1), -glm::vec3(origin.x, origin.y, origin.z));
+		auto r1 = glm::rotate(glm::mat4(1), newAngle, glm::normalize(glm::vec3(x, y, z)));
+		auto t2 = glm::translate(glm::mat4(1), glm::vec3(origin.x, origin.y, origin.z));
+
+		//transform = r1 * transform;
+		transform = t2 * r1 * t1 * transform;
 	}
 
 	void setRotation(float angle, float x, float y, float z) {
@@ -65,8 +98,6 @@ public:
 		if (angle > maxRadian) {
 			newAngle = angle - floor(angle / maxRadian) * maxRadian;
 		}
-		std::cout << newAngle << "\n";
-
 		transform = transform * glm::inverse(glm::mat4_cast(glm::quat(transform)));		//remove initial rotation 
 
 		transform = glm::rotate(transform, newAngle, glm::vec3(x, y, z));
@@ -96,6 +127,12 @@ public:
 		}
 
 		return newTransform;
+	}
+
+	void setOrigin(float x, float y, float z) {
+		origin.x = x;
+		origin.y = y;
+		origin.z = z;
 	}
 
 	void calculateOrigin()
