@@ -30,9 +30,9 @@ public:
 	std::vector<Object*> children;
 
 
-	glm::vec3 position;
-	glm::quat rotation;
-	glm::vec3 scaling = { 1,1,1 };
+	//glm::vec3 position;
+	//glm::quat rotation;
+	//glm::vec3 scaling = { 1,1,1 };
 
 	Vertex origin;
 
@@ -44,8 +44,19 @@ public:
 		transform = glm::scale(transform, glm::vec3(x, y, z));
 	}
 
+	float rot = 0.;
 	void rotate(float angle, float x, float y, float z) {
-		transform = glm::rotate(transform, angle, glm::vec3(x, y, z));
+		auto inDegrees = glm::degrees(angle);
+
+		inDegrees = fmod(inDegrees, 360.f);
+
+		auto newAngle = glm::radians(inDegrees);
+		rot += glm::degrees(newAngle);
+		std::cout << rot << "\n";
+	
+		transform = glm::translate(transform, glm::vec3(-origin.x, -origin.y, -origin.z));
+		transform = glm::rotate(transform, newAngle, glm::normalize(glm::vec3(x, y, z)));
+		transform = glm::translate(transform, glm::vec3(origin.x, origin.y, origin.z));
 	}
 
 	void setRotation(float angle, float x, float y, float z) {
@@ -57,6 +68,7 @@ public:
 		std::cout << newAngle << "\n";
 
 		transform = transform * glm::inverse(glm::mat4_cast(glm::quat(transform)));		//remove initial rotation 
+
 		transform = glm::rotate(transform, newAngle, glm::vec3(x, y, z));
 	}
 
@@ -104,9 +116,9 @@ public:
 		origin.y = centerY / vertNum;
 		origin.z = centerZ / vertNum;
 
-		position.x = origin.x;
-		position.y = origin.y;
-		position.z = origin.z;
+		//position.x = origin.x;
+		//position.y = origin.y;
+		//position.z = origin.z;
 
 		//localPosition.x = origin.x;
 		//localPosition.y = origin.y;

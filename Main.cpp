@@ -7,6 +7,9 @@
 #include <gl/GL.h>
 #include <gl/GLU.h>
 #include "ObjParser.h"
+#include "Timer.h"
+
+#include "glm/gtc/type_ptr.hpp"
 
 #pragma comment (lib, "OpenGL32.lib")
 #pragma comment (lib, "GLU32.lib")
@@ -27,6 +30,8 @@ void drawObject(Object* object);
 void drawObject(Object* object, glm::mat4x4 ctm);
 void drawObject(Object* object, glm::mat4x4 ctm, int depth);
 void drawWithMatrix(Object* object, glm::mat4x4 ctm);
+
+void rotateHead();
 
 // Parameters for gluLookAt
 float eyeX = 0.0f, eyeY = 0.0f, eyeZ = 10.0f; // Camera position
@@ -129,11 +134,15 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			//	centerZ -= 1.0f;
 			//	break;
 			case 'D':
-				Head->rotate(glm::radians(5.0f), 0, 0, 1);
+				Head->rotate(glm::radians(15.f), 0, 1, 0);
 				break;
 
 			case 'A':
-				Head->rotate(-glm::radians(5.0f), 0, 0, 1);
+				Head->rotate(glm::radians(-15.f), 0, 1, 0);
+				break;
+
+			case 'W':
+				rotateHead();
 				break;
 
 			case VK_UP:
@@ -231,7 +240,7 @@ void display()
 	//Head->position = { 50, 50, 0 };
 
 	glm::mat4x4 ctm = glm::mat4x4(1.0f);
-	drawObject(parser.objectList[2], ctm, 0);
+	drawObject(parser.objectList[0], ctm, 0);
 
 	//Head->rotate(0.1f, 0, 1, 0);
 	//angle += 1.5f;
@@ -242,9 +251,21 @@ void display()
 	//	//drawObject(object);
 	//}
 
+	rotateHead();
+
 	//Head->translate(0.1f, 0, 0);
 
 	glPopMatrix();
+}
+
+float Lerp(float a, float b, float t) {
+	return a * (1 - t) + b * t;
+}
+
+float headRotateStartTime = 0.0f;
+void rotateHead() {
+	auto angle = Lerp(0, 60, headRotateStartTime - Timer().currentTime());
+	Head->rotate(glm::radians(1.f ), 0, 1, 0);
 }
 
 
@@ -279,11 +300,16 @@ void drawWithMatrix(Object* object, glm::mat4x4 ctm) {
 
 	glPushMatrix();
 
-	glScalef(scale.x, scale.y, scale.z);
-	glRotatef(eulerRotation.x, axis.x	, 0		, 0);
-	glRotatef(eulerRotation.y, 0		, axis.y, 0);
-	glRotatef(eulerRotation.z, 0		, 0		, axis.z);
-	glTranslatef(translation.x, translation.y, translation.z);
+	//glScalef(scale.x, scale.y, scale.z);
+	
+	glMultMatrixf(glm::value_ptr(ctm));
+	
+	//glRotatef(eulerRotation.x, axis.x	, 0		, 0);
+	//glRotatef(eulerRotation.y, 0		, axis.y, 0);
+	//glRotatef(eulerRotation.z, 0		, 0		, axis.z);
+
+
+	//glTranslatef(translation.x, translation.y, translation.z);
 
 	for (auto face : object->faceData) {
 		if (face.size() == 3) {
@@ -377,6 +403,14 @@ void loadMaterial(Material material) {
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, material.properties[GL_AMBIENT].data());
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, material.properties[GL_DIFFUSE].data());
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, material.properties[GL_SPECULAR].data());
+}
+
+
+void Start() {
+	headRotateStartTime = Timer().currentTime();
+	Head->rotate(glm::radians(15.f), 0, 1, 0);
+
+
 }
 
 //--------------------------------------------------------------------
@@ -516,7 +550,7 @@ int main(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 	float lightDirection[] = { 1.3, -0.4, 0.2, 0 };
 	glLightfv(GL_LIGHT0, GL_POSITION, lightDirection);
 
-
+	Start();
 	while (true)
 	{
 		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
