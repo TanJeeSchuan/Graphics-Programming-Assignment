@@ -5,6 +5,7 @@
 #include <vector>
 #include "Vertex.h"
 #include <string>
+#include <algorithm>
 
 #define GLM_ENABLE_EXPERIMENTAL 1
 
@@ -36,6 +37,12 @@ public:
 
 	Vertex origin;
 
+	glm::vec3 getWorldOrigin() {
+		glm::vec3 vec = { origin.x, origin.y, origin.z };
+		vec += glm::vec3(transform[3]);
+		return vec;
+	}
+
 	void translate(float x, float y, float z) {
 		origin.x += x;
 		origin.y += y;
@@ -48,44 +55,12 @@ public:
 	}
 
 	float rot = 0.;
-	void rotateAroundPoint(float angle, float x, float y, float z, float a, float b, float c) {
-		auto inDegrees = glm::degrees(angle);
-
-		inDegrees = fmod(inDegrees, 360.f);
-
-		auto newAngle = glm::radians(inDegrees);
-		//rot += glm::degrees(newAngle);
-		//std::cout << rot << "\n";
-
-		if (children.size() > 0) {
-			for (auto child : children) {
-				child->rotateAroundPoint(angle, x, y, z, a, b, c);
-			}
-		}
-
-		auto t1 = glm::translate(glm::mat4(1), -glm::vec3(a, b, c));
-		auto r1 = glm::rotate(glm::mat4(1), newAngle, glm::normalize(glm::vec3(x, y, z)));
-		auto t2 = glm::translate(glm::mat4(1), glm::vec3(a, b, c));
-
-		transform = r1 * transform;
-	}
-
 	void rotate(float angle, float x, float y, float z) {
 		auto inDegrees = glm::degrees(angle);
 
 		inDegrees = fmod(inDegrees, 360.f);
 
 		auto newAngle = glm::radians(inDegrees);
-		//rot += glm::degrees(newAngle);
-		//std::cout << rot << "\n";
-
-		//if (children.size() > 0) {
-		//	for (auto child : children) {
-		//		child->rotateAroundPoint(angle, x, y, z, origin.x, origin.y, origin.z);
-		//	}
-		//}
-
-
 		
 		auto t1 = glm::translate(glm::mat4(1), -glm::vec3(origin.x, origin.y, origin.z));
 		auto r1 = glm::rotate(glm::mat4(1), newAngle, glm::normalize(glm::vec3(x, y, z)));
@@ -146,6 +121,28 @@ public:
 		origin.y = centerY / vertNum;
 		origin.z = centerZ / vertNum;
 
+		//---- new ---- median
+		//std::vector<float> xVerts;
+		//std::vector<float> yVerts;
+		//std::vector<float> zVerts;
+
+		//for (auto face : faceData) {
+		//	for (auto& vertex : face) {
+		//		xVerts.push_back(vertex.x);
+		//		yVerts.push_back(vertex.y);
+		//		zVerts.push_back(vertex.z);
+		//		vertNum++;
+		//	}
+		//}
+
+		//if (xVerts.empty() || yVerts.empty() || zVerts.empty()) {
+		//	return;
+		//}
+
+		//origin.x = Median(xVerts, xVerts.size());
+		//origin.y = Median(yVerts, yVerts.size());
+		//origin.z = Median(zVerts, zVerts.size());
+
 		//position.x = origin.x;
 		//position.y = origin.y;
 		//position.z = origin.z;
@@ -157,6 +154,20 @@ public:
 		transform = glm::translate(transform, glm::vec3(origin.x, origin.y, origin.z));
 		// 
 		//transform = glm::scale(transform, glm::vec3(1, 1, 1));
+	}
+
+	float Median(std::vector<float> v, int n)
+	{
+		// Sort the vector
+		std::sort(v.begin(), v.end());
+
+		// Check if the number of elements is odd
+		if (n % 2 != 0)
+			return (float)v[n / 2];
+
+		// If the number of elements is even, return the average
+		// of the two middle elements
+		return (float)(v[(n - 1) / 2] + v[n / 2]) / 2.0;
 	}
 
 	void transformToWorldPositionZero() {
@@ -184,6 +195,8 @@ public:
 	}
 
 	void addChild(Object* childObject) {
+		if (childObject == nullptr) return;
+
 		if (childObject->parent != nullptr) {
 			childObject->parent->removeChild(childObject);
 		}
