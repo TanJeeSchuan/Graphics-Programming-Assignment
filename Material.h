@@ -32,6 +32,7 @@ public:
 		properties.insert({ GL_AMBIENT	, {0.0f, 0.0f, 0.0f, 1.0f} });
 		properties.insert({ GL_DIFFUSE	, {0.0f, 0.0f, 0.0f, 1.0f} });
 		properties.insert({ GL_SPECULAR , {0.0f, 0.0f, 0.0f, 1.0f} });
+		properties.insert({ GL_EMISSION , {0.0f, 0.0f, 0.0f, 1.0f} });
 		properties.insert({ GL_SHININESS, {50.0f	 } });
 	}
 
@@ -54,6 +55,13 @@ public:
 	void setSpecularColour(float r, float g, float b)
 	{
 		int key = GL_SPECULAR;
+		properties[key][0] = r;
+		properties[key][1] = g;
+		properties[key][2] = b;
+	}
+
+	void setEmissionColour(float r, float g, float b) {
+		int key = GL_EMISSION;
 		properties[key][0] = r;
 		properties[key][1] = g;
 		properties[key][2] = b;

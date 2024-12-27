@@ -22,6 +22,8 @@ private:
 	glm::mat4x4 transform = glm::mat4x4(1.0f);
 
 public:
+	bool enabled = true;
+
 	//std::vector<Vertex> vertices;
 	std::string name;
 

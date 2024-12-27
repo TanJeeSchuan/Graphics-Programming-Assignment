@@ -13,6 +13,7 @@ public:
 	std::string name;
 	std::vector<Vertex> allVertices;
 	std::vector<std::vector<float>> allNormals;
+	std::vector<std::vector<float>> allTextureVertex;
 	std::vector<std::vector<Vertex>> faceData;
 
 	std::vector<Material*> materialList = {};
@@ -67,8 +68,8 @@ public:
 				}
 
 				else if (keyword == "Ke") {
-					//auto values = getTokens(str);
-					//newMaterial->setAmbientColour(std::stof(values[1]), std::stof(values[2]), std::stof(values[3]));
+					auto values = getTokens(str);
+					newMaterial->setEmissionColour(std::stof(values[1]), std::stof(values[2]), std::stof(values[3]));
 				}
 
 				else if (keyword == "Ni") {
@@ -153,6 +154,17 @@ public:
 							faceVertex.normZ = normalVerts[2];
 						}
 
+						//-------------- texture vertex --------------
+						int texIndex = std::stoi(split(verts, '/')[1]) - 1;
+						std::cout << texIndex << std::endl;
+
+						if (texIndex < allTextureVertex.size())
+						{
+							auto textureVertex = allTextureVertex[texIndex];
+							faceVertex.texX = textureVertex[0];
+							faceVertex.texY = textureVertex[1];
+						}
+
 						faceVertices.push_back(faceVertex);
 					}
 
@@ -195,11 +207,20 @@ public:
 					auto tokens = getTokens(str);
 					loadNormal(std::stof(tokens[1]), std::stof(tokens[2]), std::stof(tokens[3]));
 				}
+				
+				else if (keyword == "vt") {
+					auto tokens = getTokens(str);
+					loadTextureVertex(std::stof(tokens[1]), std::stof(tokens[2]));
+				}
 			}
 		}
 
 		file.clear();
 		file.seekg(0);
+	}
+
+	void loadTextureVertex(float x, float y) {
+		allTextureVertex.push_back({ x,y });
 	}
 
 	void loadNormal(float x, float y, float z) {

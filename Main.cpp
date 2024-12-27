@@ -21,6 +21,10 @@ WNDCLASS wndClass;
 int xRot = 0;
 int zRot = 0;
 
+enum CAMERA_PROJECTION {
+	ORTHO, PERSPECTIVE
+};
+
 //float eyeX = 0, eyeY = 0, centerX = 0, centerY = 0;
 
 void createWindow();
@@ -30,8 +34,10 @@ void drawObject(Object* object);
 void drawObject(Object* object, glm::mat4x4 ctm);
 void drawObject(Object* object, glm::mat4x4 ctm, int depth);
 void drawWithMatrix(Object* object, glm::mat4x4 ctm);
+void setCamera(CAMERA_PROJECTION);
 
 void rotateHead();
+void raiseRArm();
 
 // Parameters for gluLookAt
 float eyeX = 0.0f, eyeY = 0.0f, eyeZ = 10.0f; // Camera position
@@ -44,6 +50,9 @@ float increVal = 0.2f;
 float targetX = 0.0f;
 float targetY = 0.0f;
 float targetZ = 0.0f;
+
+int raiseRArmCounter = -1;
+int swingRArmCounter = -1;
 
 Object* Chest;
 Object* Pelvis;
@@ -80,65 +89,6 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 	case WM_KEYDOWN:
 
 		switch (wParam) {
-
-		//case 'A': // Increase valueA
-		//	valueA += 0.1f;
-		//	break;
-		//case 'Z': // Decrease valueA
-		//	valueA -= 0.1f;
-		//	break;
-		//case 'S': // Increase valueB
-		//	valueB += 0.1f;
-		//	break;
-		//case 'X': // Decrease valueB
-		//	valueB -= 0.1f;
-		//	break;
-		//case 'D': // Increase valueC
-		//	valueC += 0.1f;
-		//	break;
-		//case 'C': // Decrease valueC
-		//	valueC -= 0.1f;
-		//	break;
-		//case 'F': // Increase valueD
-		//	valueD += 0.1f;
-		//	break;
-		//case 'V': // Decrease valueD
-		//	valueD -= 0.1f;
-		//	break;
-
-			//case VK_UP:    // Move eye upward
-			//	eyeY += 1.0f;
-			//	break;
-			//case VK_DOWN:  // Move eye downward
-			//	eyeY -= 1.0f;
-			//	break;
-			//case VK_RIGHT: // Move eye right
-			//	eyeX += 1.0f;
-			//	break;
-			//case VK_LEFT:  // Move eye left
-			//	eyeX -= 1.0f;
-			//	break;
-
-			//	// Control the center point
-			//case 'W':      // Move center point upward
-			//	centerY += 1.0f;
-			//	break;
-			//case 'S':      // Move center point downward
-			//	centerY -= 1.0f;
-			//	break;
-			//case 'D':      // Move center point right
-			//	centerX += 1.0f;
-			//	break;
-			//case 'A':      // Move center point left
-			//	centerX -= 1.0f;
-			//	break;
-			//case 'Q':
-			//	std::cout << "Q";
-			//	centerZ += 1.0f;
-			//	break;
-			//case 'E':
-			//	centerZ -= 1.0f;
-			//	break;
 			case 'Q':
 				Head->rotate(glm::radians(5.f), 0, 1, 0);
 				break;
@@ -251,6 +201,12 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			case VK_NUMPAD3: // Numpad 3 decreases targetZ
 				targetZ -= increVal;
 				break;
+
+			case '1':
+				raiseRArmCounter = 50;
+				break;
+			case '2':
+				swingRArmCounter = 3;
 
 			case VK_UP:
 				xRot++;
@@ -393,6 +349,29 @@ void rotateHead() {
 	Head->rotate(glm::radians(1.f ), 0, 1, 0);
 }
 
+void raiseRArm() {
+	if (raiseRArmCounter > 0) {
+		ArmR->rotate(glm::radians(-1.0f), 1,0 , 0);
+		ArmR->rotate(glm::radians(1.0f), 0, 1, 0);
+		Forearm->rotate(glm::radians(-2.0f), 1, 0, 0);
+		raiseRArmCounter--;
+
+		if (raiseRArmCounter == 2) {
+			std::cout << "ENABLE";
+			Weapon->enabled = true;
+		}
+	}
+}
+
+void swingArmR() {
+	if (swingRArmCounter > 0) {
+		ArmR->rotate(glm::radians(18.0f), 1, 0, 0);
+		ArmR->rotate(glm::radians(-18.0f), 0, 0, 1);
+		Forearm->rotate(glm::radians(18.0f), 1, 0, 0);
+		swingRArmCounter--;
+	}
+}
+
 
 void drawObject(Object* object, glm::mat4x4 ctm, int depth) {
 	ctm = ctm * object->getTransform();
@@ -407,7 +386,8 @@ void drawObject(Object* object, glm::mat4x4 ctm, int depth) {
 	//}
 
 	for (auto child : object->children) {
-		drawObject(child, ctm, depth++);
+		if(child->enabled)
+			drawObject(child, ctm, depth++);
 	}
 	return;
 }
@@ -537,11 +517,20 @@ void loadMaterial(Material material) {
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, material.properties[GL_AMBIENT].data());
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, material.properties[GL_DIFFUSE].data());
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, material.properties[GL_SPECULAR].data());
+
+	float emission[4] = { 1.f,1.f,1.f,1.f };
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, material.properties[GL_EMISSION].data());
+
 }
 
 void Start() {
 	headRotateStartTime = Timer().currentTime();
 	Head->rotate(glm::radians(15.f), 0, 1, 0);
+}
+
+void Update() {
+	raiseRArm();
+	swingArmR();
 }
 
 //--------------------------------------------------------------------
@@ -600,10 +589,10 @@ int main(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 
 	parser = ObjParser();
 
-	parser.openMtl("robot1.mtl");
+	parser.openMtl("robot2.mtl");
 	parser.loadMaterial();
 
-	parser.openObj("robot1.obj");
+	parser.openObj("robot2.obj");
 	parser.load();
 
 
@@ -655,6 +644,8 @@ int main(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 	Pelvis->addChild(LegR);
 		LowerLegL->addChild(LowerLegR);
 
+		
+	Weapon->enabled = false;
 
 	ArmR->setOrigin(-2.8, 0.4, 0);
 	Arm_002->setOrigin(-3.4, 0.4, 0);
@@ -694,7 +685,7 @@ int main(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 	glEnable(GL_LIGHTING);
 	glDepthFunc(GL_LEQUAL);
 	glEnable(GL_DEPTH_TEST);
-
+	glEnable(GL_TEXTURE_2D);
 	
 	//glEnable(GL_LIGHT0);
 	//glLightfv(GL_LIGHT0, GL_DIFFUSE, new float[3] {1.0f, 1.0f, 1.0f});
@@ -727,6 +718,7 @@ int main(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 			DispatchMessage(&msg);
 		}
 		
+		Update();
 		display();
 
 		SwapBuffers(hdc);

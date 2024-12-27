@@ -7,6 +7,7 @@ class Vertex
 public:
 	float x, y, z;
 	float normX = 0, normY = 0, normZ = 0;
+	float texX = 0, texY = 0, texZ = 0;
 	Color* color;
 	Material* material;
 
