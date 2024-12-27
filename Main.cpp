@@ -10,6 +10,7 @@
 #include "Timer.h"
 
 #include "glm/gtc/type_ptr.hpp"
+#include "TextureHandler.h"
 
 #pragma comment (lib, "OpenGL32.lib")
 #pragma comment (lib, "GLU32.lib")
@@ -17,6 +18,8 @@
 
 HWND g_hWnd = NULL; //is variable, is a pointer, set to NULL for safety
 WNDCLASS wndClass;
+
+TextureHandler texHandler;
 
 int xRot = 0;
 int zRot = 0;
@@ -405,20 +408,25 @@ void drawWithMatrix(Object* object, glm::mat4x4 ctm) {
 	auto axis = glm::axis(rotation);
 	glm::vec3 eulerRotation = glm::degrees(glm::eulerAngles(rotation));
 
-	if (debug && object == Arm_002) {
-		glPushMatrix();
-		glTranslatef(object->origin.x, object->origin.y, object->origin.z);
-		float material[3] = { 1,0,0 };
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, material);
+	//if (debug && object == Arm_002) {
+	//	glPushMatrix();
+	//	glTranslatef(object->origin.x, object->origin.y, object->origin.z);
+	//	float material[3] = { 1,0,0 };
+	//	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, material);
 
-		GLUquadricObj* var = nullptr;
-		var = gluNewQuadric();
-		gluQuadricDrawStyle(var, GLU_FILL);
-		gluSphere(var, 0.5, 15, 15);
-		gluDeleteQuadric(var);
+	//	GLUquadricObj* var = nullptr;
+	//	var = gluNewQuadric();
+	//	gluQuadricDrawStyle(var, GLU_FILL);
+	//	gluSphere(var, 0.5, 15, 15);
+	//	gluDeleteQuadric(var);
 
-		glPopMatrix();
-		resetMaterial();
+	//	glPopMatrix();
+	//	resetMaterial();
+	//}
+
+	GLuint tex = 0;
+	if (object == Chest) {
+		tex = texHandler.loadTexture("Metal", "metal.bmp");
 	}
 
 	glPushMatrix();	
@@ -445,14 +453,47 @@ void drawWithMatrix(Object* object, glm::mat4x4 ctm) {
 			else {
 				int a = 0;
 			}
+
+			if (object == Chest) {
+				//texHandler.loadTexture("Metal", "metal.bmp");
+				//auto tex = texHandler.textures["Metal"];
+
+				//HBITMAP hBMP = tex.HBitMap;
+				//BITMAP BMP = tex.BMPHeader;
+				//auto texture = tex.texId;
+
+				//GetObject(hBMP, sizeof(BMP), &BMP);
+				//// assign texture
+				//glEnable(GL_TEXTURE_2D);
+				//glGenTextures(1, &texture);
+				//glBindTexture(GL_TEXTURE_2D, texture);
+				//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, BMP.bmWidth, BMP.bmHeight, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, BMP.bmBits);
+
+				//auto texture = texHandler.textures["Metal"];
+				//glEnable(GL_TEXTURE_2D);
+				//glGenTextures(1, &texture.texId);
+				//glBindTexture(GL_TEXTURE_2D, texture.texId);
+				//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture.BMPHeader.bmWidth, texture.BMPHeader.bmHeight, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, texture.BMPHeader.bmBits);
+			}
+
+			glTexCoord2f(vertex.texX, vertex.texY);
 			glNormal3fv(vertex.normalData());
 			glVertex3fv(vertex.vertexData());
+
+
 			resetMaterial();
 			//glPopAttrib();
 		}
 
 		glEnd();
 	}
+
+	glDeleteTextures(1, &tex);
+
 	glPopMatrix();
 }
 
@@ -537,55 +578,17 @@ void Update() {
 
 int main(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 {
-	//WNDCLASSEX wc;
-	//ZeroMemory(&wc, sizeof(WNDCLASSEX));
-	
-	//wc.cbSize = sizeof(WNDCLASSEX);
-	//wc.hInstance = GetModuleHandle(NULL);
-	//wc.lpfnWndProc = WindowProcedure;
-	//wc.lpszClassName = WINDOW_TITLE;
-	//wc.style = CS_HREDRAW | CS_VREDRAW;
-
-	//if (!RegisterClassEx(&wc))
-	//	return false;
-
-	//HWND hWnd = CreateWindowExA(0, WINDOW_TITLE, WINDOW_TITLE, WS_OVERLAPPEDWINDOW,
-	//	CW_USEDEFAULT, CW_USEDEFAULT, 800, 600,
-	//	NULL, NULL, wc.hInstance, NULL);
-
-
 	createWindow();
 
-	//--------------------------------
-	//	Initialize window for OpenGL
-	//--------------------------------
-
-	//HDC hdc = GetDC(hWnd);
 	HDC hdc = GetDC(g_hWnd);
 	
-	//	initialize pixel format for the window
 	initPixelFormat(hdc);
-
-	//	get an openGL context
 	HGLRC hglrc = wglCreateContext(hdc);
-
-	//	make context current
 	if (!wglMakeCurrent(hdc, hglrc)) return false;
 
-	//--------------------------------
-	//	End initialization
-	//--------------------------------
-
-	//ShowWindow(hWnd, 1);
 	ShowWindow(g_hWnd, 1);
-
 	MSG msg;
 	ZeroMemory(&msg, sizeof(msg));
-
-	//init
-
-	//obj = new Object();
-	//OpenGlParser parser = OpenGlParser();
 
 	parser = ObjParser();
 
@@ -595,6 +598,8 @@ int main(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 	parser.openObj("robot2.obj");
 	parser.load();
 
+	texHandler = TextureHandler();
+	//texHandler.loadTexture("Metal", "metal.bmp");
 
 	for (auto object : parser.objectList) {
 		if (object->name == "Chest") Chest = object;
@@ -654,44 +659,17 @@ int main(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 	HandFinger->setOrigin(-1.f, -1.2, 0);
 	HandFinger2->setOrigin(-1.f, -1.2, 0);
 	Chest->setOrigin(-0.f, -0.4f, 0);
-	//ArmR->origin.x = 0.f;
-	//ArmR->origin.y = 0.f;
-	//ArmR->origin.z =0.f;
-
-
-	//Arm_002->setOrigin(0,0, 0.695774f);
-	//Forearm->setOrigin(0.f, 0.f, 0.f);
-	//Hand->setOrigin(-2.8, -0.f, 1.0f);
-	////HandFinger->setOrigin(-1.01921, -1, 4.86113);
-	////HandFinger2->setOrigin(-1.01921, -1, 4.86113);
-	//HandFinger->setOrigin(0.440792, -1.41174, -5.40215);
-	//HandFinger2->setOrigin(-0.255423, -1.41174, -5.40215);
-
-	//ArmR->setOrigin(0, 0.77307f, 0);
-	//Arm_002->setOrigin(0, 0.786829f, 0);
-	//Forearm->setOrigin(0, 1.37977f, 0.153257f);
-	//Hand->setOrigin(-3.41106f, -0.079353f, -4.73028f);
+	
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(60.0f, 1, 1, 3000);
-	
-	//glFrustum(-10, 10, -10, 10, 0, 150);
-	
-	//glOrtho(-1, 1, -1, 1, -1, 1);
-	
 	
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_LIGHTING);
 	glDepthFunc(GL_LEQUAL);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
-	
-	//glEnable(GL_LIGHT0);
-	//glLightfv(GL_LIGHT0, GL_DIFFUSE, new float[3] {1.0f, 1.0f, 1.0f});
-	////glLightfv(GL_LIGHT0, GL_SPECULAR,new float[3] {1.0f, 1.0f, 1.0f});
-	//glLightfv(GL_LIGHT0, GL_POSITION, new float[3] {1, 1, 1});
-
 
 	glEnable(GL_LIGHT0);
 	float diffuse[] = { 1.0f, 1.0f, 1.0f };
@@ -702,9 +680,6 @@ int main(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 
 	float lightDirection[] = { 1.3, -0.4, 0.2, 0 };
 	glLightfv(GL_LIGHT0, GL_POSITION, lightDirection);
-
-	//float ambeient[] = { 0.0f, 0.2f, 0.0f, 1.0f };
-	//glLightfv(GL_LIGHT0, GL_AMBIENT, ambeient);
 
 	glMatrixMode(GL_MODELVIEW);
 	Start();
