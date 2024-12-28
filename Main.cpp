@@ -56,6 +56,24 @@ float targetZ = 0.0f;
 
 int raiseRArmCounter = -1;
 int swingRArmCounter = -1;
+int doubleSwingRArmFirstCounter = -1;
+int doubleSwingRArmSecondCounter = -1;
+int doubleSwingRArmThirdCounter = -1;
+int doubleSwingRArmFourthCounter = -1;
+int raiseLArmCounter = -1;
+int raiseUpRArmCounter = -1;
+int rotateSwingRArmCounter = -1;
+int slashUpRArmCounter = -1;
+int slashDownRArmCounter = -1;
+
+float rotateAngleRArmX = 0.0;
+float rotateAngleRArmZ = 0.0;
+float rotateAngleLArmX = 0.0;
+float rotateAngleLArmZ = 0.0;
+float rotateAngleForearmX = 0.0;
+float rotateAngleHandFingerX = 0.0;
+
+bool isWeaponOut = false;
 
 Object* Chest;
 Object* Pelvis;
@@ -109,11 +127,17 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 				break;
 
 			case 'E':
-				ArmR->rotate(glm::radians(5.f), 1, 0, 0);
+				if (rotateAngleRArmX < 20.0f) {
+					ArmR->rotate(glm::radians(5.f), 1, 0, 0);
+					rotateAngleRArmX++;
+				}
 				break;
 
 			case 'D':
-				ArmR->rotate(glm::radians(-5.f), 1, 0, 0);
+				if (rotateAngleRArmX > -40.0f) {
+					ArmR->rotate(glm::radians(-5.f), 1, 0, 0);
+					rotateAngleRArmX--;
+				}
 				break;
 
 			case 'C':
@@ -125,21 +149,33 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 				break;
 
 			case 'Z':
-				ArmR->rotate(glm::radians(5.f), 0, 0, 1);
+				if (rotateAngleRArmZ <= 0.0f) {
+					ArmR->rotate(glm::radians(5.f), 0, 0, 1);
+					rotateAngleRArmZ++;
+				}
 				break;
 
 			case 'X': // Originally 'F'
-				ArmR->rotate(glm::radians(-5.f), 0, 0, 1);
+				if (rotateAngleRArmZ > -10.0f) {
+					ArmR->rotate(glm::radians(-5.f), 0, 0, 1);
+					rotateAngleRArmZ--;
+				}
 				break;
 
 			//----------------------------------
 
 			case 'R': // Originally 'T'
-				Forearm->rotate(glm::radians(5.f), 1, 0, 0);
+				if (rotateAngleForearmX < 25.0f) {
+					Forearm->rotate(glm::radians(5.f), 1, 0, 0);
+					rotateAngleForearmX++;
+				}
 				break;
 
 			case 'F': // Originally 'G'
-				Forearm->rotate(glm::radians(-5.f), 1, 0, 0);
+				if (rotateAngleForearmX > -25.0f) {
+					Forearm->rotate(glm::radians(-5.f), 1, 0, 0);
+					rotateAngleForearmX--;
+				}
 				break;
 
 			case 'T': // Originally 'Y'
@@ -151,13 +187,19 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 				break;
 
 			case 'Y': // Originally 'U'
-				HandFinger->rotate(glm::radians(5.f), 1, 0, 0);
-				HandFinger2->rotate(glm::radians(-5.f), 1,0, 0);
+				if (rotateAngleHandFingerX < 5.0f) {
+					HandFinger->rotate(glm::radians(5.f), 1, 0, 0);
+					HandFinger2->rotate(glm::radians(-5.f), 1, 0, 0);
+					rotateAngleHandFingerX++;
+				}
 				break;
 
 			case 'H': // Originally 'J'
-				HandFinger->rotate(glm::radians(-5.f), 1, 0, 0);
-				HandFinger2->rotate(glm::radians(5.f), 1, 0, 0);
+				if (rotateAngleHandFingerX > -5.0f) {
+					HandFinger->rotate(glm::radians(-5.f), 1, 0, 0);
+					HandFinger2->rotate(glm::radians(5.f), 1, 0, 0);
+					rotateAngleHandFingerX--;
+				}
 				break;
 
 			//cannon arm --------------------------
@@ -171,19 +213,31 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 				break;
 
 			case 'I': // Originally 'I'
-				CannonArm->rotate(glm::radians(5.f), 0, 0, 1);
+				if (rotateAngleLArmZ > -10.0f) {
+					CannonArm->rotate(glm::radians(5.f), 0, 0, 1);
+					rotateAngleLArmZ--;
+				}
 				break;
 
 			case 'K': // Originally 'K'
-				CannonArm->rotate(glm::radians(-5.f), 0, 0, 1);
+				if (rotateAngleLArmZ <= 0.0f) {
+					CannonArm->rotate(glm::radians(-5.f), 0, 0, 1);
+					rotateAngleLArmZ++;
+				}
 				break;
 
 			case 'O': // Originally 'I'
-				CannonArm->rotate(glm::radians(5.f), 1, 0, 0);
+				if (rotateAngleLArmX < 20.0f) {
+					CannonArm->rotate(glm::radians(5.f), 1, 0, 0);
+					rotateAngleLArmX++;
+				}
 				break;
 
 			case 'L': // Originally 'K'
-				CannonArm->rotate(glm::radians(-5.f), 1, 0, 0);
+				if (rotateAngleLArmX > -40.0f) {
+					CannonArm->rotate(glm::radians(-5.f), 1, 0, 0);
+					rotateAngleLArmX--;
+				}
 				break;
 
 			case VK_NUMPAD4: // Numpad 4 increases targetX
@@ -210,7 +264,31 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 				break;
 			case '2':
 				swingRArmCounter = 3;
-
+				break;
+			case '3':
+				raiseLArmCounter = 50;
+				break;
+			case '4':
+				raiseUpRArmCounter = 50;
+				rotateSwingRArmCounter = 13;
+				break;
+			case '5':
+				if (isWeaponOut == false) {
+					isWeaponOut = true;
+				}
+				doubleSwingRArmFirstCounter = 5;
+				doubleSwingRArmSecondCounter = 8;
+				doubleSwingRArmThirdCounter = 5;
+				doubleSwingRArmFourthCounter = 8;
+				break;
+			case '6':
+				if (isWeaponOut == false) {
+					isWeaponOut = true;
+				}
+				slashUpRArmCounter = 8;
+				slashDownRArmCounter = 8;
+				break;
+				 
 			case VK_UP:
 				xRot++;
 				break;
@@ -375,6 +453,106 @@ void swingArmR() {
 	}
 }
 
+void raiseLArm() {
+	if (raiseLArmCounter > 0) {
+		CannonArm->rotate(glm::radians(-1.0f), 1, 0, 0);
+		CannonArm->rotate(glm::radians(-1.0f), 1, 0, 0);
+		raiseLArmCounter--;
+	}
+}
+
+void rotateSwingArmR() {
+	if (raiseUpRArmCounter > 0) {
+		ArmR->rotate(glm::radians(-1.0f), 1, 0, 0);
+		ArmR->rotate(glm::radians(1.0f), 0, 1, 0);
+		ArmR->rotate(glm::radians(-1.0f), 0, 0, 1);
+		Forearm->rotate(glm::radians(-1.0f), 1, 0, 0);
+		raiseUpRArmCounter--;
+
+		if (raiseUpRArmCounter == 2) {
+			Weapon->enabled = true;
+		}
+	}
+	else if(raiseUpRArmCounter == 0){
+		if (rotateSwingRArmCounter > 0) {
+			Chest->rotate(glm::radians(-30.0f), 0, 1, 0);
+			rotateSwingRArmCounter--;
+			
+			if (rotateSwingRArmCounter == 0) {
+				raiseUpRArmCounter--;
+			}
+		}
+	}
+}
+
+void doubleSwingArmR() {
+	if (isWeaponOut == true) {
+		Weapon->enabled = true;
+	}
+
+	if (doubleSwingRArmFirstCounter > 0) {
+		ArmR->rotate(glm::radians(-18.0f), 1, 0, 0);
+		ArmR->rotate(glm::radians(18.0f), 0, 1, 0);
+		ArmR->rotate(glm::radians(-18.0f), 0, 0, 1);
+		Forearm->rotate(glm::radians(-18.0f), 1, 0, 0);
+		doubleSwingRArmFirstCounter--;
+	}
+	else if (doubleSwingRArmFirstCounter == 0) {
+		if (doubleSwingRArmSecondCounter > 0) {
+			Forearm->rotate(glm::radians(10.0f), 1, 0, 0);
+			ArmR->rotate(glm::radians(5.0f), 0, 0, 1);
+			ArmR->rotate(glm::radians(-10.0f), 0, 1, 0);
+			ArmR->rotate(glm::radians(10.0f), 1, 0, 0);
+			
+			doubleSwingRArmSecondCounter--;
+		}
+		if (doubleSwingRArmSecondCounter == 0) {
+			doubleSwingRArmFirstCounter--;
+		}
+	}
+	else if (doubleSwingRArmSecondCounter == 0) {
+		if (doubleSwingRArmThirdCounter > 0) {
+			ArmR->rotate(glm::radians(-18.0f), 1, 0, 0);
+			doubleSwingRArmThirdCounter--;
+		}
+		if (doubleSwingRArmThirdCounter == 0) {
+			doubleSwingRArmSecondCounter--;
+		}
+	}
+	else if (doubleSwingRArmThirdCounter == 0) {
+		if (doubleSwingRArmFourthCounter > 0) {
+			ArmR->rotate(glm::radians(10.0f), 1, 0, 0);
+			ArmR->rotate(glm::radians(10.0f), 0, 0, 1);
+
+			doubleSwingRArmFourthCounter--;
+		}
+		if (doubleSwingRArmFourthCounter == 0) {
+			doubleSwingRArmThirdCounter--;
+		}
+	}
+}
+
+void slashFrontArmR() {
+	if (isWeaponOut == true) {
+		Weapon->enabled = true;
+	}
+
+	if (slashUpRArmCounter > 0) {
+		ArmR->rotate(glm::radians(-18.0f), 1, 0, 0);
+		slashUpRArmCounter--;
+	}else if (slashUpRArmCounter == 0) {
+
+		if (slashDownRArmCounter > 0) {
+			ArmR->rotate(glm::radians(18.0f), 1, 0, 0);
+			//ArmR->rotate(glm::radians(-5.0f), 0, 1, 0);
+			slashDownRArmCounter--;
+		}
+		
+		if (slashDownRArmCounter == 0) {
+			slashUpRArmCounter--;
+		}
+	}
+}
 
 void drawObject(Object* object, glm::mat4x4 ctm, int depth) {
 	ctm = ctm * object->getTransform();
@@ -572,6 +750,10 @@ void Start() {
 void Update() {
 	raiseRArm();
 	swingArmR();
+	raiseLArm();
+	rotateSwingArmR();
+	doubleSwingArmR();
+	slashFrontArmR();
 }
 
 //--------------------------------------------------------------------
