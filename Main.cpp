@@ -24,10 +24,12 @@ TextureHandler texHandler;
 int xRot = 0;
 int zRot = 0;
 
-enum CAMERA_PROJECTION {
-	ORTHO, PERSPECTIVE
-};
+int windowWidth = 1024;
+int windowHeight = 1024;
 
+bool doChange = false;
+bool isOrtho = false;
+bool wireFrameMode = false;
 //float eyeX = 0, eyeY = 0, centerX = 0, centerY = 0;
 
 void createWindow();
@@ -37,11 +39,10 @@ void drawObject(Object* object);
 void drawObject(Object* object, glm::mat4x4 ctm);
 void drawObject(Object* object, glm::mat4x4 ctm, int depth);
 void drawWithMatrix(Object* object, glm::mat4x4 ctm);
-void setCamera(CAMERA_PROJECTION);
 
 void rotateHead();
 void raiseRArm();
-
+void swapCamera();
 // Parameters for gluLookAt
 float eyeX = 0.0f, eyeY = 0.0f, eyeZ = 10.0f; // Camera position
 float centerX = 0.0f, centerY = 0.0f, centerZ = 0.0f; // Target point
@@ -240,23 +241,12 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 				}
 				break;
 
-			case VK_NUMPAD4: // Numpad 4 increases targetX
-				targetX += increVal;
+			case VK_NUMPAD1:
+				doChange = true;
 				break;
-			case VK_NUMPAD5: // Numpad 5 increases targetY
-				targetY += increVal;
-				break;
-			case VK_NUMPAD6: // Numpad 6 increases targetZ
-				targetZ += increVal;
-				break;
-			case VK_NUMPAD1: // Numpad 1 decreases targetX
-				targetX -= increVal;
-				break;
-			case VK_NUMPAD2: // Numpad 2 decreases targetY
-				targetY -= increVal;
-				break;
-			case VK_NUMPAD3: // Numpad 3 decreases targetZ
-				targetZ -= increVal;
+
+			case VK_NUMPAD2:
+				wireFrameMode = !wireFrameMode;
 				break;
 
 			case '1':
@@ -360,7 +350,7 @@ glm::mat4 viewMat(1.0f);
 void display()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+	swapCamera();
 
 	//glPushMatrix();
 	//	glTranslatef(centerX, centerY, -50.0f);
@@ -378,6 +368,7 @@ void display()
 	glTranslatef(0, 5.0f, -20.0f);
 	//glRotatef(-90, 0, 1, 0);
 	glRotatef(zRot, 0, 1, 0);
+	glRotatef(xRot, 1, 0, 0);
 
 	float mat[16];
 	glGetFloatv(GL_MODELVIEW_MATRIX, mat);
@@ -554,6 +545,27 @@ void slashFrontArmR() {
 	}
 }
 
+void swapCamera() {
+	if(doChange)
+	{
+		doChange = false;
+		if (!isOrtho)
+		{
+			glMatrixMode(GL_PROJECTION);
+			glLoadIdentity();
+			gluPerspective(60.0f, 1, 1, 3000);
+		}
+		else {
+			glMatrixMode(GL_PROJECTION);
+			glLoadIdentity();
+			glOrtho(-10, 10, -10, 10, -50.0f, 50.0f);
+		}
+
+		glMatrixMode(GL_MODELVIEW);
+		isOrtho = !isOrtho;
+	}
+}
+
 void drawObject(Object* object, glm::mat4x4 ctm, int depth) {
 	ctm = ctm * object->getTransform();
 	drawWithMatrix(object, ctm);
@@ -586,31 +598,22 @@ void drawWithMatrix(Object* object, glm::mat4x4 ctm) {
 	auto axis = glm::axis(rotation);
 	glm::vec3 eulerRotation = glm::degrees(glm::eulerAngles(rotation));
 
-	//if (debug && object == Arm_002) {
-	//	glPushMatrix();
-	//	glTranslatef(object->origin.x, object->origin.y, object->origin.z);
-	//	float material[3] = { 1,0,0 };
-	//	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, material);
-
-	//	GLUquadricObj* var = nullptr;
-	//	var = gluNewQuadric();
-	//	gluQuadricDrawStyle(var, GLU_FILL);
-	//	gluSphere(var, 0.5, 15, 15);
-	//	gluDeleteQuadric(var);
-
-	//	glPopMatrix();
-	//	resetMaterial();
-	//}
-
 	GLuint tex = 0;
 	if (object == Chest) {
 		tex = texHandler.loadTexture("Metal", "metal.bmp");
+	}
+	if (object == Arm_002 || object == LegL || object == LegR) {
+		tex = texHandler.loadTexture("Metal2", "metal2.bmp");
 	}
 
 	glPushMatrix();	
 	glMultMatrixf(glm::value_ptr(ctm));
 	for (auto face : object->faceData) {
-		if (face.size() == 3) {
+		if (wireFrameMode) {
+			glBegin(GL_LINE_STRIP);
+		}
+	
+		else if (face.size() == 3) {
 			glBegin(GL_TRIANGLES);
 		}
 		else if (face.size() == 4) {
@@ -619,43 +622,9 @@ void drawWithMatrix(Object* object, glm::mat4x4 ctm) {
 		else {
 			glBegin(GL_POLYGON);
 		}
-
-		//glEnd();
-		//glBegin(GL_LINE_STRIP);
-
 		for (auto& vertex : face) {
-			//glPushAttrib(GL_LIGHTING_BIT);
 			if (vertex.material != nullptr) {
 				loadMaterial(*vertex.material);
-			}
-			else {
-				int a = 0;
-			}
-
-			if (object == Chest) {
-				//texHandler.loadTexture("Metal", "metal.bmp");
-				//auto tex = texHandler.textures["Metal"];
-
-				//HBITMAP hBMP = tex.HBitMap;
-				//BITMAP BMP = tex.BMPHeader;
-				//auto texture = tex.texId;
-
-				//GetObject(hBMP, sizeof(BMP), &BMP);
-				//// assign texture
-				//glEnable(GL_TEXTURE_2D);
-				//glGenTextures(1, &texture);
-				//glBindTexture(GL_TEXTURE_2D, texture);
-				//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-				//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, BMP.bmWidth, BMP.bmHeight, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, BMP.bmBits);
-
-				//auto texture = texHandler.textures["Metal"];
-				//glEnable(GL_TEXTURE_2D);
-				//glGenTextures(1, &texture.texId);
-				//glBindTexture(GL_TEXTURE_2D, texture.texId);
-				//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-				//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture.BMPHeader.bmWidth, texture.BMPHeader.bmHeight, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, texture.BMPHeader.bmBits);
 			}
 
 			glTexCoord2f(vertex.texX, vertex.texY);
@@ -664,7 +633,6 @@ void drawWithMatrix(Object* object, glm::mat4x4 ctm) {
 
 
 			resetMaterial();
-			//glPopAttrib();
 		}
 
 		glEnd();
@@ -843,9 +811,7 @@ int main(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 	Chest->setOrigin(-0.f, -0.4f, 0);
 	
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(60.0f, 1, 1, 3000);
+	
 	
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_LIGHTING);
@@ -862,6 +828,10 @@ int main(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 
 	float lightDirection[] = { 1.3, -0.4, 0.2, 0 };
 	glLightfv(GL_LIGHT0, GL_POSITION, lightDirection);
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(60.0f, 1, 1, 3000);
 
 	glMatrixMode(GL_MODELVIEW);
 	Start();
@@ -919,7 +889,7 @@ void createWindow()
 		Create the Window.
 	*/
 	//	You are to refer to MSDN for each of the parameters details.
-	g_hWnd = CreateWindowEx(0, wndClass.lpszClassName, "Practical", WS_OVERLAPPEDWINDOW, 0, 100, 1024, 1024, NULL, NULL, hInstance, NULL);
+	g_hWnd = CreateWindowEx(0, wndClass.lpszClassName, "Graphics Assignment", WS_OVERLAPPEDWINDOW, 0, 100, windowWidth, windowHeight, NULL, NULL, hInstance, NULL);
 	ShowWindow(g_hWnd, 1);
 }
 //--------------------------------------------------------------------
